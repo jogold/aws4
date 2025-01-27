@@ -280,6 +280,27 @@ describe('aws4', function() {
     })
   })
 
+  describe('#sign() with copies', function() {
+    it('should modify request/opts in place and return same object', function() {
+      var opts = {service: 'sqs'}
+      var newOpts = aws4.sign(opts)
+      opts.should.equal(newOpts)
+    })
+
+    it('should not modify existing headers', function() {
+      var headers = {
+        'Content-Type': 'application/x-amz-json-1.0',
+        'X-Amz-Target': 'DynamoDB_20120810.ListTables',
+      }
+      var opts = aws4.sign({
+        service: 'dynamodb',
+        headers: headers,
+        body: '{}',
+      })
+      opts.headers.should.not.equal(headers)
+    })
+  })
+
   describe('#sign() with signQuery', function() {
     it('should work with standard services', function() {
       var opts = aws4.sign({
@@ -392,7 +413,7 @@ describe('aws4', function() {
       opts.headers.Authorization.should.equal(
         'AWS4-HMAC-SHA256 Credential=ABCDEF/20121226/us-east-1/aoss/aws4_request, ' +
         'SignedHeaders=content-type;date;host;x-amz-content-sha256;x-amz-date, ' +
-        'Signature=ade8635c05bfa4961bc28be0b0a0fbfd3d64e79feb1862f822ee6a4517417bcd')
+        'Signature=742b9db3c09dbc6d29dd965fa44ec2d004d4aed4f0f4d179d0ee989c08c9bf06')
     })
   })
 
@@ -412,7 +433,7 @@ describe('aws4', function() {
       opts.headers.Authorization.should.equal(
         'AWS4-HMAC-SHA256 Credential=ABCDEF/20121226/us-east-1/someservice/aws4_request, ' +
         'SignedHeaders=date;host;range;x-amz-date, ' +
-        'Signature=8f3eba7a5743091daae62d00ce1c911c018d48f72dbdf180b15abe701718317a')
+        'Signature=8298a63e47319d57c1af6dfb5e5e5f1b30d2515ad1130d7f240b57ce94302d59')
     })
   })
 
@@ -731,6 +752,53 @@ describe('aws4', function() {
       signer.sign().path.should.equal('/?a=&A=')
     })
 
+    it('should deal with extraHeadersToIgnore', function() {
+      var signer = new RequestSigner({
+        host: '07tjusf2h91cunochc.us-east-1.aoss.amazonaws.com',
+        method: 'PUT',
+        path: '/my-index',
+        body: '{"mappings":{}}',
+        headers: {
+          Date: date,
+          'Content-Type': 'application/json',
+          'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD',
+        },
+        extraHeadersToIgnore: {
+          'content-length': true
+        },
+      })
+      var canonical = signer.canonicalString().split('\n')
+
+      canonical[3].should.equal('content-type:application/json')
+      canonical[4].should.equal('date:Wed, 26 Dec 2012 06:10:30 GMT')
+      canonical[5].should.equal('host:07tjusf2h91cunochc.us-east-1.aoss.amazonaws.com')
+      canonical[6].should.equal('x-amz-content-sha256:UNSIGNED-PAYLOAD')
+      canonical[7].should.equal('x-amz-date:20121226T061030Z')
+      canonical[8].should.equal('')
+      canonical[9].should.equal('content-type;date;host;x-amz-content-sha256;x-amz-date')
+    })
+  
+    it('should deal with extraHeadersToInclude', function() {
+      var signer = new RequestSigner({
+        service: 'someservice',
+        path: '/whatever',
+        headers: {
+          Date: date,
+          'Range': 'bytes=200-1000, 2000-6576, 19000-',
+        },
+        extraHeadersToInclude: {
+          'range': true
+        },
+      })
+      var canonical = signer.canonicalString().split('\n')
+
+      canonical[3].should.equal('date:Wed, 26 Dec 2012 06:10:30 GMT')
+      canonical[4].should.equal('host:someservice.us-east-1.amazonaws.com')
+      canonical[5].should.equal('range:bytes=200-1000, 2000-6576, 19000-')
+      canonical[6].should.equal('x-amz-date:20121226T061030Z')
+      canonical[7].should.equal('')
+      canonical[8].should.equal('date;host;range;x-amz-date')
+    })
   })
 
   describe('with AWS test suite', function() {

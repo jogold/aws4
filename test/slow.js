@@ -133,6 +133,29 @@ void (async() => {
     },
     body: '{}',
   }, {
+    url: 'https://dynamodb.us-east-1.amazonaws.com/',
+    headers: {
+      'Content-Type': 'application/x-amz-json-1.0',
+      'X-Amz-Target': 'DynamoDB_20120810.ListTables',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'User-Agent': 'node',
+    },
+    extraHeadersToInclude: {
+      'user-agent': true,
+    },
+    body: '{}',
+  }, {
+    url: 'https://dynamodb.us-east-1.amazonaws.com/',
+    headers: {
+      'Content-Type': 'application/x-amz-json-1.0',
+      'X-Amz-Target': 'DynamoDB_20120810.ListTables',
+      'Accept-Encoding': 'gzip, deflate, br',
+    },
+    extraHeadersToIgnore: {
+      'content-type': true,
+    },
+    body: '{}',
+  }, {
     service: 'appstream',
     url: 'https://appstream2.us-east-1.amazonaws.com/',
     headers: {
@@ -154,14 +177,6 @@ void (async() => {
     headers: {
       'Content-Type': 'application/x-amz-json-1.1',
       'X-Amz-Target': 'DataPipeline.ListPipelines',
-      'Accept-Encoding': 'gzip, deflate, br',
-    },
-    body: '{}',
-  }, {
-    url: 'https://opsworks.us-east-1.amazonaws.com/',
-    headers: {
-      'Content-Type': 'application/x-amz-json-1.1',
-      'X-Amz-Target': 'OpsWorks_20130218.DescribeStacks',
       'Accept-Encoding': 'gzip, deflate, br',
     },
     body: '{}',
